@@ -38,4 +38,58 @@ Liste à deux dimensions possible : List < List <int> > c(a);
 
 Possible de passer plusieurs paramètres de type : template < typename T, typename U> et à l'utilisation : List<int, float>
 
-  
+## Exercise 01: Iter
+
+Default template : si pas de type définit sur une template, juste mettre template < typename T = float > pour considérer float comme le type de la template par default
+Vertex<int> v2(12, 23, 23); // on précise
+Vertex<> v2(12, 23, 23); // appelle du type par défault
+mais on a qd passer des entiers alors que float est le type par default qu'est ce qui se passe ? la classe est instancier par un float donc conversion implicit va être faite et les entiers seront convertis en float
+
+surchage operateur chevrons gauche surcher avec classe template
+
+Specialization partielle
+On spécifie entre <> les différents types que l'on va utiliser dans notre classe
+template < typename U >
+class Pair < int, U > {
+  public : 
+    Pair < int, U> (int lhs, U const & rhs) : _lhs(lhs), _rhs(rhs){...} // spécialization partiel sur les entiers
+    ~Pair < int, U>(void) {}
+      int fst(void) const {...};
+      U const & scnd(void) const {...};
+...
+  }
+
+Specialization complète
+Les deux param de type sont specialisés aka dans tout les autre cas utilise le template générique mais si et seulement si les types que tu me donnes sont les suivants, alors utilise cette version du code.
+template <> // puisque j'ai spécialisé chaque var de type, il n'y en a plus dans la liste
+class Pair < bool, bool > {
+  public : 
+    Pair < bool, bool > (bool lhs, bool & rhs) : _lhs(lhs), _rhs(rhs){
+      this->_n = 0;
+      this->_n = static_cast<int>(lhs) << 0;
+      this->_n = static_cast<int>(rhs) << 0;
+      return ;
+    } // spécialization complète
+    ~Pair  < bool, bool > (void) {}
+      int fst(void) const {...};
+      U const & scnd(void) const {...};
+...
+  }
+
+template <typename T, typename U>
+std::ostream & operator << (std::ostream & o, Pair < T, U> const & p)
+{
+o << "Pair(" << p.fst() << " , " << p.snd() << " )";
+return o;
+}
+std::ostream & operator << (std::ostream & o, Pair < bool, bool> const & p)
+{
+o << std::boolalpha << "Pair(" << p.fst() << " , " << p.snd() << " )";
+return o;
+}
+
+Permets de gagner de la place en mémoire si on sait qu'on va utiliser des bool!
+
+
+
+
