@@ -1,95 +1,108 @@
-## Exercise 00: Start with a few functions
+# C++ Module 07 – Templates
 
-Function templates : generic functions that work with any data type. Defined in header files because must be available at compile time. 
-Instead of writing separate functions for each type we define a template that the compiler can use to generate the necessary code. 
+This module is focused on **C++ templates**, one of the most powerful features of the language. Templates allow writing **generic and reusable code** that works with any data type, without rewriting logic for every type.
 
-Safety : ensures both arguments are of the same type. 
+## 📝 What I Learned
 
-template < typename T>
-T max(T &x, T &y) // prendre par référence pour pas faire une copie de la classe et pas perdre en mémoire
-{
-  return (x >= y ? x : y);
+* How to define and use **function and class templates**
+* Specialization (partial and full) of templates
+* Handling **const correctness** in templates
+* Template instantiation (implicit vs explicit)
+* Safe array access with custom class templates
+* Improving memory safety with RAII and exception handling
+
+---
+
+## 📦 Exercise 00: Start with a few functions
+
+**Goal**: Write three **function templates**: `swap`, `min`, and `max`.
+
+### Concepts Practiced
+
+* **Function templates**: Writing functions that work with any type.
+* **Generic programming**: No code duplication needed for different types.
+* **Reference passing**: Using `T&` avoids unnecessary copies.
+* **Const correctness**: Ensures safety when using constant arguments.
+
+```cpp
+template <typename T>
+T max(T const &x, T const &y) {
+    return (x >= y ? x : y);
 }
+```
 
-Instancation explicit vs instancation implicit
-Instancation explicit : appeler le fonction et mettre entre < > le type sur lequel on souhaite instancier notre template puis entre () les vraiables.
-Mais pas de précision sur quel est le type de chaque variable.
-Instancation implicit : on peut directement mettre le nom du template suivit entre () des variables sans préciser le type qui est évident dans ce cas ci (exemple max, min).
+### Template Instantiation
 
-Fonctions templates, classes et structure templates. 
+* **Explicit**: `max<int>(a, b);` – we define the type manually.
+* **Implicit**: `max(a, b);` – compiler deduces the type automatically.
 
-template < typename T > // peut être utiliser ensuite à la place du type effectif dans ma classe
+---
 
-class List // donne structure de classe qui 
-  {
-  public :
-    List <T>(T const & content) {...} // constructeur qui prend une ref sur un élément cte (le contenue) à partir de laquelle on va pouvoir créer notre liste, le type T sera remplacer par le type effectif et deviendra excatement ce qu'il nous faut à l'instanciation de notre template
-    List <T>(List <T> const & list) {...}
-    ~List <T>(void) {...}
-    ...
-  private :
-    T* _content; // T* comme type sur grosse structure mais peut etre enlever
-    List<T> _next;
+## 📦 Exercise 01: Iter
+
+**Goal**: Implement a function template `iter` that applies a function to each element of an array.
+
+### Concepts Practiced
+
+* Writing **template functions with function parameters**
+* Supporting both **const and non-const arrays**
+* **Default template arguments** and function overloading
+* Using **function pointers or lambdas** as arguments
+
+```cpp
+template <typename T>
+void iter(T *array, int length, void (*func)(T const &)) {
+    for (int i = 0; i < length; i++)
+        func(array[i]);
+}
+```
+
+### Also Learned
+
+* **Specialization**:
+
+  * **Partial specialization**: Used when one template parameter is fixed.
+  * **Full specialization**: Used when all template parameters are known.
+
+Example (from `Pair<int, U>` and `Pair<bool, bool>`):
+
+```cpp
+template <>
+class Pair<bool, bool> {
+    // Efficient memory representation using bitwise ops
 };
+```
 
-template de classe fonctionne comme template de fonction => pas de définition de classe mais de template de classe donc peut l'utiliser pour l'instancier qui donnera ensuite des classes spécialisés pour entiers/char/grosses structures/classes
+This technique optimizes space when dealing with known types (like `bool`).
 
-Liste à deux dimensions possible : List < List <int> > c(a);
+---
 
-Possible de passer plusieurs paramètres de type : template < typename T, typename U> et à l'utilisation : List<int, float>
+## 📦 Exercise 02: Array
 
-## Exercise 01: Iter
+**Goal**: Implement a **class template** `Array<T>` that mimics a basic version of `std::vector`.
 
-Default template : si pas de type définit sur une template, juste mettre template < typename T = float > pour considérer float comme le type de la template par default
-Vertex<int> v2(12, 23, 23); // on précise
-Vertex<> v2(12, 23, 23); // appelle du type par défault
-mais on a qd passer des entiers alors que float est le type par default qu'est ce qui se passe ? la classe est instancier par un float donc conversion implicit va être faite et les entiers seront convertis en float
+### Concepts Practiced
 
-surchage operateur chevrons gauche surcher avec classe template
+* Custom **class templates**
+* Safe dynamic memory allocation using `new[]` and `delete[]`
+* Implementing:
 
-Specialization partielle
-On spécifie entre <> les différents types que l'on va utiliser dans notre classe
-template < typename U >
-class Pair < int, U > {
-  public : 
-    Pair < int, U> (int lhs, U const & rhs) : _lhs(lhs), _rhs(rhs){...} // spécialization partiel sur les entiers
-    ~Pair < int, U>(void) {}
-      int fst(void) const {...};
-      U const & scnd(void) const {...};
-...
-  }
+  * **Default constructor**
+  * **Parameterized constructor**
+  * **Copy constructor**
+  * **Assignment operator**
+  * **Element access with bounds checking**
+  * **size()** method
 
-Specialization complète
-Les deux param de type sont specialisés aka dans tout les autre cas utilise le template générique mais si et seulement si les types que tu me donnes sont les suivants, alors utilise cette version du code.
-template <> // puisque j'ai spécialisé chaque var de type, il n'y en a plus dans la liste
-class Pair < bool, bool > {
-  public : 
-    Pair < bool, bool > (bool lhs, bool & rhs) : _lhs(lhs), _rhs(rhs){
-      this->_n = 0;
-      this->_n = static_cast<int>(lhs) << 0;
-      this->_n = static_cast<int>(rhs) << 0;
-      return ;
-    } // spécialization complète
-    ~Pair  < bool, bool > (void) {}
-      int fst(void) const {...};
-      U const & scnd(void) const {...};
-...
-  }
+### Exception Safety
 
-template <typename T, typename U>
-std::ostream & operator << (std::ostream & o, Pair < T, U> const & p)
-{
-o << "Pair(" << p.fst() << " , " << p.snd() << " )";
-return o;
+* Accessing out-of-bounds elements throws a **standard exception**.
+* This avoids **undefined behavior** and ensures **memory safety**.
+
+```cpp
+T &operator[](unsigned int i) {
+    if (i >= this->_size)
+        throw std::out_of_range("Index out of bounds");
+    return this->_array[i];
 }
-std::ostream & operator << (std::ostream & o, Pair < bool, bool> const & p)
-{
-o << std::boolalpha << "Pair(" << p.fst() << " , " << p.snd() << " )";
-return o;
-}
-
-Permets de gagner de la place en mémoire si on sait qu'on va utiliser des bool!
-
-
-
-
+```
